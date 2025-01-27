@@ -1,14 +1,33 @@
 import express from "express"
-import axios from "axios"
 import bodyParser from "body-parser";
 import mongoose from "mongoose"
+import userRouter from "./routes/userRouter.js"
+import productRouter from "./routes/productRouter.js"
 
 
-let app=express();
+
+
+
+let app=express(); 
 
 app.use(bodyParser.json());
+app.use((req, res, next) => {
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+    
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, "kv-secret-89!");
+            req.user = decoded;
+        } catch (error) {
+            // Token verification failed - continue without setting user
+        }
+    }
+    
+    next();
+});
 
-let mongourl="mongodb+srv://admin:admin123@cluster0.3gqwa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+
+let mongourl="mongodb+srv://binzsilva75:12345@cluster0.jnn7a.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 mongoose.connect(mongourl)
 
@@ -17,43 +36,8 @@ connection.once("open",()=>{
     console.log("Mongodb Connection established successfully")
 }) 
 
-
-
-app.get("/",(req,res)=>{
-    console.log("that is a request");
-    res.json({
-        message:"Good Morning "+req.body.name
-    })
-});
-
-app.post("/",(req,res)=>{
-    let studentSchema=mongoose.Schema({
-        name:String,
-        age:Number,
-        height:Number,
-
-    })
-
-    let Student=mongoose.model("students",studentSchema)
-
-    let newStudent=req.body
-    let student=new Student(newStudent)
-    student.save().then(
-        ()=>{
-            res.json({
-                "message":"Student saved successfully"
-            })
-        }
-    ).catch(
-        ()=>{
-            res.json({
-                "message":"Student couldnt be saved"
-            })
-        }
-    )
-}
-
-)
+app.use("/api/users",userRouter)
+app.use("/api/products",productRouter)
 
 
 app.listen(3000,()=>{
